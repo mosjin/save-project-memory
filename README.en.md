@@ -8,14 +8,14 @@
 
 ## What This Skill Does
 
-Say "save memory" in any project, and Claude automatically:
+This is a Claude Code Skill wrapper for [mempalace](https://github.com/milla-jovovich/mempalace). Say "save to mempalace" in any project, and Claude automatically:
 
 1. **Installs mempalace** (first run ~30–60 s, skipped afterwards)
 2. **Registers the MCP Server** (once per machine)
 3. **Determines storage path automatically** (env var → non-system drive → project-local)
-4. **Scans and saves** project docs to a searchable vector memory store
+4. **Runs `mempalace mine .`** — mempalace's native scan-and-save logic, unchanged
 
-Supported: CHANGELOG, TECH_LOG, IDEAS, README, CLAUDE.md, architecture docs, system prompts, project state files, and more.
+File scanning, classification, and deduplication are all handled by mempalace's own logic. Content is stored verbatim — no summarization.
 
 ---
 
@@ -37,11 +37,11 @@ Inside Claude Code, run in order:
 /plugin install save-project-memory
 ```
 
-If the skill doesn't activate immediately, run `/reload-plugins` and try again.
+Run `/reload-plugins` to activate.
 
 ---
 
-### Alternative B: Python One-Liner
+### Alternative: Python One-Liner
 
 ```bash
 git clone https://github.com/mosjin/save-project-memory.git
@@ -53,10 +53,10 @@ Then run `/reload-plugins` inside Claude Code. To uninstall: `python install.py 
 
 ---
 
-### Alternative C: Shell Script (with custom storage path)
-
 <details>
-<summary>macOS / Linux</summary>
+<summary>Shell Script (with custom storage path)</summary>
+
+**macOS / Linux:**
 
 ```bash
 git clone https://github.com/mosjin/save-project-memory.git
@@ -65,10 +65,7 @@ bash install.sh                              # default: ~/mempalace/<project-nam
 bash install.sh --base-dir /data/mempalace   # custom storage root
 ```
 
-</details>
-
-<details>
-<summary>Windows (PowerShell)</summary>
+**Windows (PowerShell):**
 
 ```powershell
 git clone https://github.com/mosjin/save-project-memory.git
@@ -88,22 +85,22 @@ If you see "cannot be loaded" errors, run first: `Set-ExecutionPolicy RemoteSign
 After installation, open any project and tell Claude:
 
 ```
-save memory
+save to mempalace
 ```
 
 ### First-Time Flow
 
 ```
-1. Claude runs the Skill, installs mempalace (~30–60 s)
+1. Skill runs, installs mempalace (~30–60 s)
 2. Registers the MCP Server and writes the storage path config
 3. ⚠️  Prompts you to restart Claude Code (MCP loads at session start — one restart required)
-4. After restart, say "save memory" again to start scanning and saving docs
-5. Done — Claude reports how many memories were saved
+4. After restart, say "save to mempalace" again to run mempalace mine .
+5. Done
 ```
 
 ### Subsequent Runs
 
-After the one-time restart, each "save memory" completes in under 30 seconds. Fully idempotent — safe to run anytime.
+After the one-time restart, each "save to mempalace" goes straight to scanning. Fully idempotent — safe to run anytime.
 
 ---
 
@@ -130,27 +127,6 @@ export MEMPALACE_BASE_DIR="$HOME/mempalace"
 
 ---
 
-## Memory Structure (Wing / Room)
-
-Each project gets its own **wing** named after the project directory — memories from different projects never mix:
-
-```
-<your-project-name>/       ← wing = current project directory name
-  changelog                ← CHANGELOG.md
-  tech-log                 ← TECH_LOG.md, engineering lessons
-  version                  ← VERSION.yaml, version config
-  architecture             ← Architecture docs
-  project-state            ← Current project state
-  lessons                  ← Rules and lessons learned
-  ideas                    ← IDEAS.md, future plans
-  product-spec             ← Product manuals
-  prompts                  ← Active system prompts
-  readme                   ← README.md
-  conventions              ← CLAUDE.md, coding conventions
-```
-
----
-
 ## Requirements
 
 - **Claude Code** CLI
@@ -164,12 +140,6 @@ Each project gets its own **wing** named after the project directory — memorie
 **Q: Claude can't find mempalace tools after setup?**
 
 A: The MCP Server loads at session start. After first-time setup you must restart Claude Code once — it works normally after that.
-
----
-
-**Q: Will re-running save duplicate memories?**
-
-A: No. The Skill calls `tool_check_duplicate` before each save. Content with ≥ 90% similarity is skipped (75% for frequently-updated docs like CHANGELOG).
 
 ---
 

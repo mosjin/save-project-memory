@@ -8,14 +8,14 @@
 
 ## 这个 Skill 做什么
 
-在任意项目里说一句"保存记忆"，Claude 自动完成：
+这是 [mempalace](https://github.com/milla-jovovich/mempalace) 的 Claude Code Skill 封装。在任意项目里说一句"save to mempalace"，Claude 自动完成：
 
 1. **安装 mempalace**（首次约 30–60 秒，之后跳过）
 2. **注册 MCP Server**（每台机器仅需一次）
 3. **自动确定存储路径**（环境变量 → 非系统盘 → 项目本地）
-4. **扫描并保存**项目文档到可搜索的向量记忆库
+4. **运行 `mempalace mine .`** — 由 mempalace 原生扫描并保存项目内容
 
-支持：CHANGELOG、TECH_LOG、IDEAS、README、CLAUDE.md、架构文档、系统提示词、项目状态文件等。
+文件扫描、分类、去重全部由 mempalace 官方逻辑处理，保存原文（verbatim），不做摘要。
 
 ---
 
@@ -37,11 +37,11 @@
 /plugin install save-project-memory
 ```
 
-若 Skill 未立即生效，执行 `/reload-plugins` 后重试。
+执行 `/reload-plugins` 后生效。
 
 ---
 
-### 备用 B：Python 一键脚本
+### 备用：Python 一键脚本
 
 ```bash
 git clone https://github.com/mosjin/save-project-memory.git
@@ -53,10 +53,10 @@ python install.py
 
 ---
 
-### 备用 C：Shell 脚本（含自定义存储路径）
-
 <details>
-<summary>macOS / Linux</summary>
+<summary>Shell 脚本安装（含自定义存储路径）</summary>
+
+**macOS / Linux：**
 
 ```bash
 git clone https://github.com/mosjin/save-project-memory.git
@@ -65,10 +65,7 @@ bash install.sh                              # 默认：~/mempalace/<项目名>/
 bash install.sh --base-dir /data/mempalace   # 自定义存储根目录
 ```
 
-</details>
-
-<details>
-<summary>Windows（PowerShell）</summary>
+**Windows（PowerShell）：**
 
 ```powershell
 git clone https://github.com/mosjin/save-project-memory.git
@@ -88,28 +85,22 @@ cd save-project-memory
 安装完成后，打开任意项目，对 Claude 说：
 
 ```
-保存记忆
-```
-
-或英文：
-
-```
-save memory
+save to mempalace
 ```
 
 ### 首次使用流程
 
 ```
-1. Claude 运行 Skill，安装 mempalace（~30–60 秒）
+1. Skill 运行，安装 mempalace（~30–60 秒）
 2. 注册 MCP Server，写入存储路径配置
 3. ⚠️  提示重启 Claude Code（MCP 在启动时加载，首次必须重启一次）
-4. 重启后再说"保存记忆"，开始正式扫描保存文档
-5. 完成，报告保存了多少条记忆
+4. 重启后再说 "save to mempalace"，运行 mempalace mine .
+5. 完成
 ```
 
 ### 后续使用
 
-重启后每次说"保存记忆"，整个流程 < 30 秒，完全幂等，随时可重复执行。
+重启后每次说 "save to mempalace" 直接进入扫描，全程幂等，随时可重复执行。
 
 ---
 
@@ -136,27 +127,6 @@ export MEMPALACE_BASE_DIR="$HOME/mempalace"
 
 ---
 
-## 记忆结构（Wing / Room）
-
-每个项目独占一个 wing（以项目目录名命名），多项目记忆互不干扰：
-
-```
-<your-project-name>/       ← wing = 当前项目目录名
-  changelog                ← CHANGELOG.md
-  tech-log                 ← TECH_LOG.md、工程经验文档
-  version                  ← VERSION.yaml、版本配置
-  architecture             ← 架构文档
-  project-state            ← 项目当前状态
-  lessons                  ← 规则与教训
-  ideas                    ← IDEAS.md、未来计划
-  product-spec             ← 产品说明书
-  prompts                  ← 系统提示词
-  readme                   ← README.md
-  conventions              ← CLAUDE.md、编码规范
-```
-
----
-
 ## 依赖
 
 - **Claude Code** CLI
@@ -170,12 +140,6 @@ export MEMPALACE_BASE_DIR="$HOME/mempalace"
 **Q: 安装后 Claude 找不到 mempalace 工具？**
 
 A: MCP Server 在 session 启动时加载。首次配置完成后必须重启 Claude Code 一次，重启后即可正常使用。
-
----
-
-**Q: 重复执行会保存重复记忆吗？**
-
-A: 不会。每次保存前调用 `tool_check_duplicate` 去重，相似度 ≥ 90% 的内容自动跳过（活文档阈值为 75%）。
 
 ---
 
