@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Backup files from install.sh sed on older systems
+*.bak
+
+# Local test artifacts
+.mempalace/
