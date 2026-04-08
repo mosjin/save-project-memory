@@ -6,20 +6,18 @@ effort: high
 allowed-tools:
   - Bash
   - mcp__mempalace__mempalace_list_wings
-  - mcp__mempalace__mempalace_check_duplicate
-  - mcp__mempalace__mempalace_add_drawer
-  - mcp__mempalace__mempalace_kg_add
-  - mcp__mempalace__mempalace_status
 ---
 
 # save-project-memory
 
-This skill is a **pure wrapper** of the [mempalace](https://github.com/milla-jovovich/mempalace) MCP.
-It installs and configures mempalace if not already set up, then saves project content into the palace using mempalace's native conventions — verbatim, no summarization, no custom taxonomy.
+A thin setup wrapper for [mempalace](https://github.com/milla-jovovich/mempalace).
+
+- **Phase 1** — installs mempalace and registers its MCP Server (one-time, idempotent)
+- **Phase 2** — runs `mempalace mine .` to save the project (mempalace's own logic, unchanged)
 
 ---
 
-## Phase 1 — Setup (idempotent, runs every time)
+## Phase 1 — Setup (idempotent)
 
 ### Step 1 — Install mempalace
 
@@ -162,7 +160,7 @@ except Exception as e:
 
 ### Step 4 — Update .gitignore (only when PALACE_TYPE=local)
 
-Skip this step if Step 3 printed `PALACE_TYPE=external`.
+Skip if Step 3 printed `PALACE_TYPE=external`.
 
 ```python
 from pathlib import Path
@@ -178,10 +176,10 @@ else:
 
 ### Step 5 — Verify MCP is active
 
-> **Claude action**: call `tool_list_wings()` (read-only, safe to call any time).
+> **Claude action**: call `tool_list_wings()` (read-only).
 
-- **Returns any result (including empty list)** → MCP is active. Proceed to Phase 2.
-- **Tool not found / "no palace" error** → MCP was not loaded in this session. Tell the user:
+- **Returns any result** → MCP is active. Proceed to Phase 2.
+- **Tool not found / error** → MCP was not loaded in this session. Tell the user:
 
 > **Setup complete. Please restart Claude Code, then say "save memory" again.**
 >
@@ -191,62 +189,22 @@ Do not proceed to Phase 2 before the restart.
 
 ---
 
-## Phase 2 — Save project content
+## Phase 2 — Save
 
-### Mempalace conventions
+Run mempalace's own mine command against the current project directory:
 
-Follow mempalace's native conventions exactly:
+```python
+import subprocess, sys
 
-**Wing** = current project directory name (`Path.cwd().name`).
-
-**Hall** = memory type (5 fixed values, same in every wing):
-
-| Hall | What belongs here |
-|------|-------------------|
-| `hall_facts` | Decisions made, architectural choices, things definitively true about this project |
-| `hall_events` | Things that happened: releases, milestones, debugging sessions, what changed |
-| `hall_discoveries` | Breakthroughs, insights, "aha" moments, new understanding |
-| `hall_preferences` | Conventions, coding rules, habits, what the team prefers or avoids |
-| `hall_advice` | Recommendations, solutions, guidance recorded for future reference |
-
-**Room** = topic slug (free-form, hyphenated, describes the subject — e.g. `auth`, `api-design`, `deployment`, `ci-pipeline`, `architecture`). Do NOT use file names as room names.
-
-**Content** = verbatim. Never summarize. Exact words from the source.
-
-### What to save
-
-Scan the project directory for any readable content worth preserving as project knowledge. This includes but is not limited to: README, CHANGELOG, CLAUDE.md, architecture docs, convention docs, idea files, technical logs, version files, system prompts, product specs, project state files. Use judgment — save anything that captures knowledge about this project.
-
-For each piece of content:
-1. Determine the appropriate hall based on content type (see table above)
-2. Determine a topic-based room slug from the content subject
-3. If content > 3000 characters, split on `## ` headings — save each section as a separate drawer
-4. Call `tool_check_duplicate(content=<text>)` — skip if duplicate
-5. Call `tool_add_drawer(wing=<project_name>, room=<room>, content=<text>, source_file=<relative_path>, added_by="save-project-memory")`
-
-### Knowledge graph (optional)
-
-After saving drawers, record key project facts you can determine with certainty:
-
-- Language: check `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, etc.
-- Branch: `git rev-parse --abbrev-ref HEAD`
-- Version: `VERSION.yaml`, `package.json` version field, etc.
-
-Only call `tool_kg_add` for facts you can confirm. Skip any you cannot.
-
-```
-tool_kg_add(subject=<project_name>, predicate="language", object=<language>)
-tool_kg_add(subject=<project_name>, predicate="current_branch", object=<branch>)
-tool_kg_add(subject=<project_name>, predicate="active_version", object=<version>)
+result = subprocess.run(
+    [sys.executable, "-m", "mempalace", "mine", "."],
+    text=True
+)
+if result.returncode != 0:
+    print(f"❌ mempalace mine failed. Try running manually: mempalace mine .")
 ```
 
-### Completion report
-
-```
-✅ Saved: <N> drawers (<M> skipped as duplicates)
-📁 Storage: <palace_path>
-🔍 Query: use mempalace search tools with natural language
-```
+Report the output to the user as-is.
 
 ---
 
@@ -259,3 +217,4 @@ tool_kg_add(subject=<project_name>, predicate="active_version", object=<version>
 | Step 3: mempalace MCP config not in .claude.json | Re-run Step 2 |
 | Step 3: WinError 32 / PermissionError | Close Claude Code → run Step 3 script standalone → reopen Claude Code |
 | pip install mempalace fails | Check Python/pip are on PATH; try `python -m pip install mempalace` |
+| mempalace mine fails | Run `mempalace mine .` manually in terminal to see full error |
