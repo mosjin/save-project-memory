@@ -21,7 +21,23 @@ Supported document types: CHANGELOG, TECH_LOG, IDEAS, README, CLAUDE.md, product
 
 ## Quick Start
 
-### Step 1: Install the Skill
+### Option A: Plugin Marketplace (Recommended — 2 commands)
+
+Inside Claude Code:
+
+```
+/plugin marketplace add mosjin/save-project-memory
+```
+
+```
+/plugin install save-project-memory
+```
+
+Run `/reload-plugins` if the skill doesn't activate automatically.
+
+---
+
+### Option B: Install Script (git clone)
 
 **macOS / Linux:**
 
@@ -41,7 +57,7 @@ cd save-project-memory
 .\install.ps1 -BaseDir "D:\mempalace"       # specify memory root
 ```
 
-The install scripts copy `SKILL.md` to `~/.claude/skills/save-project-memory/` and optionally write the `MEMPALACE_BASE_DIR` environment variable. **mempalace itself is installed automatically by the Skill on first use.**
+The scripts copy `SKILL.md` to `~/.claude/skills/save-project-memory/` and optionally write the `MEMPALACE_BASE_DIR` environment variable. **mempalace installs automatically on first use (~30–60 s, one time only).**
 
 ### Step 2: Use It
 
@@ -70,27 +86,21 @@ The path is determined automatically by priority:
 
 ## Memory Structure (Wing / Room)
 
-Saved memories are organized for precise recall:
+Saved memories are organized for precise recall. Each project gets its own **wing** (named after the project directory), so memories from different projects never mix:
 
 ```
-technical/
-  changelog     ← CHANGELOG.md
-  tech-log      ← TECH_LOG.md, engineering lessons
-  version       ← VERSION.yaml, version config
-  architecture  ← Architecture docs
-
-memory/
-  project-state ← Current project state
-  lessons       ← Rules and lessons learned
-
-creative/
-  ideas         ← IDEAS.md, future plans
-  product-spec  ← Product manuals
-  prompts       ← Active system prompts
-
-identity/
-  readme        ← README.md
-  conventions   ← CLAUDE.md, coding conventions
+<your-project-name>/       ← wing = project directory name
+  changelog                ← CHANGELOG.md
+  tech-log                 ← TECH_LOG.md, engineering lessons
+  version                  ← VERSION.yaml, version config
+  architecture             ← Architecture docs
+  project-state            ← Current project state
+  lessons                  ← Rules and lessons learned
+  ideas                    ← IDEAS.md, future plans
+  product-spec             ← Product manuals
+  prompts                  ← Active system prompts
+  readme                   ← README.md
+  conventions              ← CLAUDE.md, coding conventions
 ```
 
 ---
