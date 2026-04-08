@@ -80,7 +80,7 @@ if ($BaseDir -ne "") {
     # 自动选择：找第一个非系统盘（D 到 Z）
     $sysDrive = ($env:SystemDrive -replace '[\\\/]+$', '').ToUpper()
     $altDrive = [char[]]"DEFGHIJKLMNOPQRSTUVWXYZ" |
-        Where-Object { "${_}:" -ne $sysDrive -and (Test-Path "${_}:\") } |
+        Where-Object { "${_}:" -ne $sysDrive -and (Test-Path "${_}:\" -ErrorAction SilentlyContinue) } |
         Select-Object -First 1
 
     if ($null -ne $altDrive) {

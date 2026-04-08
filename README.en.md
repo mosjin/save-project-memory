@@ -162,19 +162,38 @@ Each project gets its own **wing** named after the project directory — memorie
 ## FAQ
 
 **Q: Claude can't find mempalace tools after setup?**
+
 A: The MCP Server loads at session start. After first-time setup you must restart Claude Code once — it works normally after that.
 
+---
+
 **Q: Will re-running save duplicate memories?**
+
 A: No. The Skill calls `tool_check_duplicate` before each save. Content with ≥ 90% similarity is skipped (75% for frequently-updated docs like CHANGELOG).
 
+---
+
 **Q: Does this work on macOS / Linux?**
+
 A: Yes. Uses `~/mempalace/<project-name>/palace` by default, or reads `MEMPALACE_BASE_DIR` if set.
 
+---
+
 **Q: I use Fish shell. How do I set the env var?**
+
 A: Add to `~/.config/fish/config.fish`: `set -x MEMPALACE_BASE_DIR "/your/path"`
 
+---
+
 **Q: Why does the first run take so long?**
+
 A: mempalace is downloaded and installed from PyPI (~30–60 s). This step is automatically skipped on every subsequent run.
+
+---
+
+**Q: Step 3 fails with WinError 32 / PermissionError on Windows?**
+
+A: Claude Code is holding `.claude.json` open. Close Claude Code → run the Step 3 Python script standalone in a terminal → reopen Claude Code.
 
 ---
 

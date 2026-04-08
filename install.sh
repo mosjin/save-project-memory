@@ -79,10 +79,6 @@ if [[ -n "${BASE_DIR}" ]]; then
   if [[ -n "${SHELL_RC}" ]]; then
     EXPORT_LINE="export MEMPALACE_BASE_DIR=\"${BASE_DIR}\""
 
-    if [[ -z "${SHELL_RC+x}" ]]; then
-      : # unreachable, guard only
-    fi
-
     if grep -qF "MEMPALACE_BASE_DIR" "${SHELL_RC}" 2>/dev/null; then
       # 已存在：用 grep -v 删除旧行，再追加新行
       # 注意：不用 sed，因为 BASE_DIR 中的特殊字符（|、& 等）会破坏 sed 表达式

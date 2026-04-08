@@ -168,19 +168,38 @@ export MEMPALACE_BASE_DIR="$HOME/mempalace"
 ## 常见问题
 
 **Q: 安装后 Claude 找不到 mempalace 工具？**
+
 A: MCP Server 在 session 启动时加载。首次配置完成后必须重启 Claude Code 一次，重启后即可正常使用。
 
+---
+
 **Q: 重复执行会保存重复记忆吗？**
+
 A: 不会。每次保存前调用 `tool_check_duplicate` 去重，相似度 ≥ 90% 的内容自动跳过（活文档阈值为 75%）。
 
+---
+
 **Q: macOS / Linux 支持吗？**
+
 A: 完全支持，自动使用 `~/mempalace/<项目名>/palace`，或读取 `MEMPALACE_BASE_DIR`。
 
+---
+
 **Q: Fish shell 如何设置环境变量？**
+
 A: 在 `~/.config/fish/config.fish` 加入：`set -x MEMPALACE_BASE_DIR "/your/path"`
 
+---
+
 **Q: 第一次运行为什么要等那么久？**
+
 A: mempalace 需要从 PyPI 下载安装，约 30–60 秒。之后每次运行此步骤会被自动跳过。
+
+---
+
+**Q: Windows 上步骤 3 报 WinError 32 / PermissionError？**
+
+A: Claude Code 正在占用 `.claude.json` 文件。关闭 Claude Code → 在终端单独运行步骤 3 的 Python 脚本 → 重新打开 Claude Code。
 
 ---
 

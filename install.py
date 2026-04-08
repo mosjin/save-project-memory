@@ -15,20 +15,23 @@ SOURCE          = {"source": {"source": "github", "repo": "mosjin/save-project-m
 
 
 def find_settings():
-    for p in [Path.home() / ".claude/settings.json",
-              Path(os.environ.get("APPDATA", "")) / "Claude/settings.json"]:
-        if p.exists():
-            return p
+    # Claude Code CLI 在所有平台上都使用 ~/.claude/settings.json
     p = Path.home() / ".claude/settings.json"
-    p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text("{}\n")
+    if not p.exists():
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text("{}\n")
     return p
 
 
 def install():
     path = find_settings()
     shutil.copy2(path, path.with_suffix(".json.bak"))
-    data = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        print(f"❌ settings.json 解析失败（文件可能已损坏）: {e}")
+        print(f"   备份已保存至: {path.with_suffix('.json.bak')}")
+        sys.exit(1)
 
     changed = False
     if MARKETPLACE_KEY not in data.setdefault("extraKnownMarketplaces", {}):

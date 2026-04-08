@@ -1,6 +1,15 @@
 ---
 name: save-project-memory
 description: Use when the user says "save memory", "save to mempalace", "保存记忆", "保存项目记忆", "project memory", or asks to persist project knowledge for future AI recall. Also use when mempalace is not yet installed or configured for the current project.
+user-invocable: true
+effort: high
+allowed-tools:
+  - Bash
+  - mcp__mempalace__mempalace_list_wings
+  - mcp__mempalace__mempalace_check_duplicate
+  - mcp__mempalace__mempalace_add_drawer
+  - mcp__mempalace__mempalace_kg_add
+  - mcp__mempalace__mempalace_status
 ---
 
 # 保存项目记忆
@@ -80,10 +89,16 @@ else:
 ```python
 import subprocess, sys
 
-result = subprocess.run(
-    ["claude", "mcp", "list"],
-    capture_output=True, text=True
-)
+try:
+    result = subprocess.run(
+        ["claude", "mcp", "list"],
+        capture_output=True, text=True
+    )
+except FileNotFoundError:
+    print("⚠️  找不到 claude 命令，请确认 Claude Code CLI 已安装并在 PATH 中")
+    print("   手动注册命令：claude mcp add mempalace -- python3 -m mempalace.mcp_server")
+    sys.exit(1)
+
 if "mempalace" in result.stdout.lower():
     print("✅ mempalace MCP 已注册，跳过")
 else:
@@ -187,22 +202,39 @@ else:
 env = target.setdefault("env", {})
 env["MEMPALACE_PALACE_PATH"] = palace_path
 
-# ── 写入（原子替换，防止 Ctrl+C 损坏文件）───────────────────
+# ── 写入（原子替换 + Windows 文件锁重试）────────────────────
+import time
 tmp_path = claude_json.with_suffix(".json.tmp")
 try:
     with open(tmp_path, "w", encoding="utf-8") as f:
         json.dump(d, f, indent=2, ensure_ascii=False)
-    tmp_path.replace(claude_json)
+    # Windows 下 Claude Code 可能持有 .claude.json 的文件锁，最多重试 3 次
+    for attempt in range(3):
+        try:
+            tmp_path.replace(claude_json)
+            break
+        except PermissionError:
+            if attempt == 2:
+                raise
+            time.sleep(0.5)
+    # 输出机器可读的路径类型标记，供步骤 4 判断是否需要更新 .gitignore
+    palace_type = "local" if ".mempalace" in palace_path else "external"
     print(f"✅ 存储路径已写入 .claude.json → {palace_path}")
+    print(f"PALACE_TYPE={palace_type}")
 except Exception as e:
     tmp_path.unlink(missing_ok=True)
     print(f"❌ 写入 .claude.json 失败: {e}")
+    if "WinError 32" in str(e) or "PermissionError" in type(e).__name__:
+        print("   Windows 提示：Claude Code 可能正在占用此文件。")
+        print("   请关闭 Claude Code，在终端单独运行此脚本，再重新打开 Claude Code。")
     sys.exit(1)
 ```
 
 ### 步骤 4 — 更新 .gitignore（仅项目本地存储时需要）
 
-若步骤 3 使用了项目本地路径（含 `/.mempalace/`），用 Python 更新 `.gitignore`（跨平台，避免 PowerShell `>>` 输出 UTF-16 的问题）：
+**仅当步骤 3 输出了 `PALACE_TYPE=local` 时执行此步骤**，否则跳过。
+
+用 Python 更新 `.gitignore`（跨平台，避免 PowerShell `>>` 输出 UTF-16 的问题）：
 
 ```python
 from pathlib import Path
@@ -321,14 +353,18 @@ CLAUDE.md
 
 抽屉保存完成后，记录关键项目事实。**将以下占位符替换为实际值**（`project_name` 已在步骤 3 中确定为 `Path.cwd().name`）：
 
-```
-# project_name 已在步骤 3 确定为 Path.cwd().name，用实际值替换尖括号占位符
-tool_kg_add(subject=project_name, predicate="language",       object=<从 package.json/pyproject.toml/go.mod 等推断>)
-tool_kg_add(subject=project_name, predicate="current_branch", object=<git rev-parse --abbrev-ref HEAD 的输出>)
-tool_kg_add(subject=project_name, predicate="active_version", object=<从 VERSION.yaml 或 package.json version 字段读取>)
-```
+按以下步骤操作（不是可执行代码，逐条推断后再调用工具）：
 
-若某字段无法确定，跳过该行，不要写入占位符文字。
+1. `project_name` = 步骤 3 中确定的 `Path.cwd().name`（项目目录名）
+2. 推断编程语言：检查 `package.json`（JavaScript/TypeScript）、`pyproject.toml`/`setup.py`（Python）、`go.mod`（Go）、`Cargo.toml`（Rust）等
+3. 获取当前分支：运行 `git rev-parse --abbrev-ref HEAD`
+4. 获取版本号：读取 `VERSION.yaml` 或 `package.json` 的 `version` 字段
+
+只调用能确定实际值的条目，跳过无法确定的（不要写入任何占位符文字）：
+
+- 若能确定语言：`tool_kg_add(subject=project_name, predicate="language", object=<实际语言名>)`
+- 若能确定分支：`tool_kg_add(subject=project_name, predicate="current_branch", object=<实际分支名>)`
+- 若能确定版本：`tool_kg_add(subject=project_name, predicate="active_version", object=<实际版本号>)`
 
 ### 完成报告
 
@@ -354,3 +390,4 @@ tool_kg_add(subject=project_name, predicate="active_version", object=<从 VERSIO
 | 大文件存成一个不可搜索的块 | 按 `## ` 标题分块（见分块策略） |
 | 安装 mempalace 失败 | 确认 Python/pip 在 PATH 中；尝试 `python3 -m pip install mempalace` |
 | 更新 CHANGELOG 后记忆未更新 | changelog/project-state 等活文档使用 0.75 阈值；若仍被跳过，旧抽屉内容可能高度相似，可手动删除后重新保存 |
+| 步骤 3 报 WinError 32 / PermissionError | Windows 下 Claude Code 正在占用 `.claude.json`。关闭 Claude Code → 在终端单独运行步骤 3 的 Python 脚本 → 重新打开 Claude Code |

@@ -13,3 +13,4 @@ desktop.ini
 
 # Claude Code worktrees (local only, not part of the repo)
 .claude/worktrees/
+__pycache__/
