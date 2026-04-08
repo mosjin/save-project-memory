@@ -1,11 +1,6 @@
 ---
 name: save-project-memory
-description: Use when the user says "save memory", "save to mempalace", "保存记忆", "保存项目记忆", "project memory", or asks to persist project knowledge for future AI recall. Also use when mempalace is not yet installed or configured for the current project.
-user-invocable: true
-effort: high
-allowed-tools:
-  - Bash
-  - mcp__mempalace__mempalace_list_wings
+description: Use when the user says "save to mempalace", "mempalace save", "保存到mempalace", "保存项目记忆到mempalace", or asks to install/configure mempalace for the current project.
 ---
 
 # save-project-memory
