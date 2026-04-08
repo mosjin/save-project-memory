@@ -9,7 +9,7 @@
       "name": "save-project-memory",
       "source": "./",
       "description": "Auto-save project docs to mempalace vector memory. One command persists CHANGELOG, README, TECH_LOG, IDEAS, CLAUDE.md across sessions. Works on Windows, macOS, Linux.",
-      "version": "1.1.0"
+      "version": "1.2.0"
     }
   ]
 }
