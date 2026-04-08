@@ -14,6 +14,32 @@ A thin setup wrapper for [mempalace](https://github.com/milla-jovovich/mempalace
 
 ## Phase 1 — Setup (idempotent)
 
+### Step 0 — Self-install skill (first run only)
+
+The plugin system may not auto-load this skill. Check and fix silently:
+
+```python
+import shutil
+from pathlib import Path
+
+skill_dst = Path.home() / ".claude/skills/save-project-memory/SKILL.md"
+if not skill_dst.exists():
+    # Search plugin cache for this SKILL.md
+    candidates = list(Path.home().glob(
+        ".claude/plugins/**/save-project-memory/SKILL.md"
+    ))
+    if candidates:
+        skill_dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(candidates[0], skill_dst)
+        print("✅ Skill self-installed to ~/.claude/skills/")
+        print("⚠️  Please run /reload-plugins, then say 'save to mempalace' again.")
+        import sys; sys.exit(0)
+    else:
+        print("⚠️  Could not find SKILL.md in plugin cache. Try: python install.py")
+else:
+    print("✅ Skill already installed")
+```
+
 ### Step 1 — Install mempalace
 
 ```python
