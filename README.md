@@ -41,7 +41,19 @@
 
 ---
 
-### 备用：脚本安装（git clone）
+### 备用 B：Python 一键脚本
+
+```bash
+git clone https://github.com/mosjin/save-project-memory.git
+cd save-project-memory
+python install.py
+```
+
+然后在 Claude Code 中运行 `/reload-plugins`。卸载：`python install.py --remove`
+
+---
+
+### 备用 C：Shell 脚本（含自定义存储路径）
 
 <details>
 <summary>macOS / Linux</summary>

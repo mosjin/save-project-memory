@@ -41,7 +41,19 @@ If the skill doesn't activate immediately, run `/reload-plugins` and try again.
 
 ---
 
-### Alternative: Install Script (git clone)
+### Alternative B: Python One-Liner
+
+```bash
+git clone https://github.com/mosjin/save-project-memory.git
+cd save-project-memory
+python install.py
+```
+
+Then run `/reload-plugins` inside Claude Code. To uninstall: `python install.py --remove`
+
+---
+
+### Alternative C: Shell Script (with custom storage path)
 
 <details>
 <summary>macOS / Linux</summary>
